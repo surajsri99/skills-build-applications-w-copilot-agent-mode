@@ -70,10 +70,38 @@ function createCrudRouter(model: Model<any>) {
 
 const apiRouter = Router();
 
+function createLeaderboardRouter() {
+  const router = Router();
+
+  router.get('/', async (_request, response, next) => {
+    try {
+      const records = await Leaderboard.find().populate('user', 'displayName username').sort({ points: -1 });
+      response.json(records);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/:id', async (request, response, next) => {
+    try {
+      const record = await Leaderboard.findById(request.params.id).populate('user', 'displayName username');
+      if (!record) {
+        response.status(404).json({ error: 'Record not found' });
+        return;
+      }
+      response.json(record);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  return router;
+}
+
 apiRouter.use('/users', createCrudRouter(User));
 apiRouter.use('/teams', createCrudRouter(Team));
 apiRouter.use('/activities', createCrudRouter(Activity));
 apiRouter.use('/workouts', createCrudRouter(Workout));
-apiRouter.use('/leaderboard', createCrudRouter(Leaderboard));
+apiRouter.use('/leaderboard', createLeaderboardRouter());
 
 export default apiRouter;
